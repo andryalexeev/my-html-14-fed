@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ты меня любишь? ❤️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            z-index: 10;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-yes {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-no {
+            background: linear-gradient(45deg, #f44336, #e53935);
+            color: white;
+            position: relative;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .btn-no:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+        }
+
+        .message {
+            margin-top: 2rem;
+            font-size: 1.8rem;
+            font-weight: bold;
+            min-height: 60px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            color: #ff6b6b;
+            animation: heartFloat 4s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes heartFloat {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .no-count {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            color: #f44336;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 12px 30px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-count" id="noCount">Попыток сказать "нет": 0</div>
+    
+    <div class="hearts" id="hearts"></div>
+    
+    <div class="container" id="container">
+        <h1>Ты меня любишь? ❤️</h1>
+        
+        <div class="buttons" id="buttonsContainer">
+            <button class="btn btn-yes" id="yesBtn" onclick="showLove()">ДА!</button>
+            <button class="btn btn-no" id="noBtn" onclick="moveButton()">Нет</button>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        let noCount = 0;
+        let yesPressed = false;
+        const container = document.getElementById('container');
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const message = document.getElementById('message');
+        const noCountDisplay = document.getElementById('noCount');
+        const heartsContainer = document.getElementById('hearts');
+        
+        // Массив милых сообщений для кнопки "Нет"
+        const cuteMessages = [
+            "Подумай еще! 🌸",
+            "Точно нет? 🥺",
+            "Может быть? 💕",
+            "Не спеши! 💝",
+            "Я хороший! 😊",
+            "Ну пожалуйста! 🌟",
+            "Ты уверена? 💖",
+            "Есть варианты? ✨",
+            "Попробуй снова! 🦋",
+            "Не отказывайся! 🌈"
+        ];
+
+        // Функция для создания сердечек
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            heart.style.fontSize = (Math.random() * 30 + 10) + 'px';
+            heartsContainer.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+        }
+
+        // Запускаем сердечки каждые 500ms
+        setInterval(createHeart, 500);
+
+        // Функция для показа сообщения о любви
+        function showLove() {
+            if (!yesPressed) {
+                yesPressed = true;
+                message.innerHTML = 'Я тебя тоже люблю! ❤️❤️❤️';
+                message.classList.add('show');
+                
+                // Создаем много сердечек
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(createHeart, i * 100);
+                }
+                
+                // Делаем кнопку "Нет" неактивной
+                noBtn.disabled = true;
+                noBtn.style.opacity = '0.5';
+                noBtn.style.cursor = 'not-allowed';
+                
+                // Меняем фон
+                document.body.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)';
+            }
+        }
+
+        // Функция для перемещения кнопки "Нет"
+        function moveButton() {
+            if (yesPressed) return;
+            
+            noCount++;
+            noCountDisplay.innerHTML = `Попыток сказать "нет": ${noCount}`;
+            
+            // Меняем текст на кнопке "Нет" случайным милым сообщением
+            const randomMessage = cuteMessages[Math.floor(Math.random() * cuteMessages.length)];
+            noBtn.innerHTML = randomMessage;
+            
+            // Получаем размеры контейнера и кнопки
+            const containerRect = container.getBoundingClientRect();
+            const buttonRect = noBtn.getBoundingClientRect();
+            
+            // Получаем размеры окна
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Вычисляем безопасные границы для кнопки
+            const maxX = windowWidth - buttonRect.width - 20;
+            const maxY = windowHeight - buttonRect.height - 20;
+            const minX = 20;
+            const minY = 20;
+            
+            // Генерируем случайные координаты
+            let newX = Math.random() * (maxX - minX) + minX;
+            let newY = Math.random() * (maxY - minY) + minY;
+            
+            // Убеждаемся, что кнопка не перекрывает контейнер
+            const containerCenterX = containerRect.left + containerRect.width / 2;
+            const containerCenterY = containerRect.top + containerRect.height / 2;
+            
+            // Если кнопка слишком близко к контейнеру, генерируем новые координаты
+            while (Math.abs(newX + buttonRect.width/2 - containerCenterX) < 150 && 
+                   Math.abs(newY + buttonRect.height/2 - containerCenterY) < 150) {
+                newX = Math.random() * (maxX - minX) + minX;
+                newY = Math.random() * (maxY - minY) + minY;
+            }
+            
+            // Применяем новую позицию
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = newX + 'px';
+            noBtn.style.top = newY + 'px';
+            
+            // Добавляем небольшую встряску для кнопки "ДА"
+            yesBtn.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                yesBtn.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Создаем маленькое сердечко при каждой попытке
+            createHeart();
+            
+            // Если много попыток, показываем подсказку
+            if (noCount === 5) {
+                message.innerHTML = 'Может уже скажешь "ДА"? 😊';
+                message.classList.add('show');
+                setTimeout(() => {
+                    if (!yesPressed) message.classList.remove('show');
+                }, 3000);
+            }
+            
+            if (noCount === 10) {
+                message.innerHTML = 'Упрямый человек! 😄';
+                message.classList.add('show');
+                setTimeout(() => {
+                    if (!yesPressed) message.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Добавляем обработчик изменения размера окна
+        window.addEventListener('resize', () => {
+            if (noBtn.style.position === 'fixed') {
+                // Если кнопка перемещена, корректируем её позицию при изменении размера окна
+                const buttonRect = noBtn.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                let left = parseFloat(noBtn.style.left);
+                let top = parseFloat(noBtn.style.top);
+                
+                // Проверяем, не выходит ли кнопка за границы
+                if (left + buttonRect.width > windowWidth) {
+                    left = windowWidth - buttonRect.width - 20;
+                }
+                if (top + buttonRect.height > windowHeight) {
+                    top = windowHeight - buttonRect.height - 20;
+                }
+                if (left < 20) left = 20;
+                if (top < 20) top = 20;
+                
+                noBtn.style.left = left + 'px';
+                noBtn.style.top = top + 'px';
+            }
+        });
+
+        // Обработчик для кнопки "ДА" на случай если нажали Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !yesPressed) {
+                showLove();
+            }
+        });
+    </script>
+</body>
+</html>
